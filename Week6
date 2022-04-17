@@ -1,0 +1,39 @@
+library(tidyverse)
+library(WDI)
+
+countries_df <- tribble(
+  ~country, ~country.code, ~continent,
+  "United States", "US", "Americas",
+  "United Kingdom", "GB", "Europe",
+  "France", "FR", "Europe",
+  "Germany", "DE", "Europe",
+  "Canada", "CA", "Americas",
+  "Saudi Arabia", "SA", "Asia",
+  "Egypt", "EG", "Africa",
+  "Estonia", "EE", "Europe",
+  "New Zealand", "ZA", "Oceania",
+  "Australia", "AU", "Oceania",
+  "China", "CN", "Asia",
+  "Singapore", "SG", "Asia",
+  "Spain", "ES", "Europe",
+  "Japan", "JO", "Asia"
+)
+
+wdi_indicators <- c("percent_pop_using_internet" = "IT.NET.USER.ZS",
+                    "gdp_per_cap" = "NY.GDP.PCAP.KD")
+
+WDI(countries_df$country.code,
+    indicator = wdi_indicators) %>% 
+  as_tibble()
+
+# join the data frame and the values file such that duplicate country 
+# name is removed, and continent is included
+
+countries_tidy <- left_join(WDI(countries_df$country.code,
+                           indicator = wdi_indicators), countries_df, by = "country")
+
+countries_tidy1 <- countries_tidy %>% 
+  select(-6) %>% 
+  as_tibble()
+
+head(countries_tidy1)          
