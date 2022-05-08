@@ -1,0 +1,91 @@
+# Week 8 assignment - write a user defined function
+
+# Load libraries ----------------------------------------------------------
+
+library(tidyverse)
+library(skimr)
+library(janitor)
+library(car)
+
+# Load data ---------------------------------------------------------------
+
+download.file(url = "http://www.minethatdata.com/Kevin_Hillstrom_MineThatData_E-MailAnalytics_DataMiningChallenge_2008.03.20.csv", 
+                          destfile = "data-raw/Data-mining-challenge.csv",
+                          mode = "wb")
+
+data <- read_csv('http://www.minethatdata.com/Kevin_Hillstrom_MineThatData_E-MailAnalytics_DataMiningChallenge_2008.03.20.csv')
+
+lift_data <- read_csv("data-raw/Data-mining-challenge.csv") %>% 
+  clean_names() %>% 
+  mutate(history_segment = as.factor(history_segment)) %>% 
+  mutate(zip_code = as.factor(zip_code)) %>% 
+  mutate(channel = as.factor(channel)) %>% 
+  mutate(segment = as.factor(segment)) %>% 
+  mutate(newbie = as.factor(newbie)) %>% 
+  mutate(occupancy = as.factor(case_when(
+  mens == 1 & womens == 0 ~ "Men only",
+  mens == 1 & womens == 1 ~ "Both men and women",
+  mens == 0 & womens == 1 ~ "Women only",
+  TRUE ~ NA_character_
+))) %>% 
+  select(-contains("mens")) %>% # removes unnecessary columns
+  relocate(occupancy, .after = history) %>% 
+  mutate(customer_value = history + spend)
+
+# Save data ---------------------------------------------------------------
+
+# write_rds(lift_data,
+          file = "data/lift-data.rds")
+
+# View data ---------------------------------------------------------------
+
+# lift_data <- read_rds("data/lift-data.rds")
+some(lift_data)
+
+# Visualize data ----------------------------------------------------------
+
+ggplot(lift_data,
+       mapping = aes(zip_code, customer_value)) +
+  geom_boxplot() +
+  labs(title = "Our customer base by zip code and customer value",
+       subtitle = "faceted by channel ",
+       x = "Zip code",
+       y = "Customer value ($)") +
+  facet_wrap(~ channel)
+
+# User defined plotting function ------------------------------------------
+
+make_boxplot <- function(discrete_x_var, 
+                         continuous_y_var)
+{
+  ggplot(lift_data,
+         mapping = aes(discrete_x_var, continuous_y_var)) +
+    geom_boxplot()  +
+    labs(title = 
+     "Our customer base",
+     subtitle = " ")
+}
+
+plot1 <- make_boxplot(lift_data$zip_code, 
+                      lift_data$customer_value)
+
+plot1
+
+# This will need Tidy Evaluate, and even then a package about to be released. So that 
+# "naked evaluation" of labels and column variables such as zip_code so 
+# that they run properly. My attempt to add facet wrapping for this
+# user defined function will not succeed as is. We want to be able to 
+# use Column Names as labels for our axes
+
+# Test user defined function on new plots ----------------------------------
+
+plot2 <- make_boxplot(lift_data$newbie,
+                      lift_data$customer_value)
+
+plot2
+
+
+plot3 <- make_boxplot(lift_data$occupancy,
+                      lift_data$customer_value)
+
+plot3
